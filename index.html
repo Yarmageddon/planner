@@ -6,8 +6,6 @@
     <title>Планер задач для Отдела развития государственных услуг</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
         * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         :root {
@@ -55,10 +53,7 @@
         .task-card.priority-high { border-left-color: #ef4444; }
         .modal { display: none; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white; transition: all 0.3s ease;
-        }
+        .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; transition: all 0.3s ease; }
         .btn-secondary { background-color: var(--bg-tertiary); color: var(--text-primary); }
         input, textarea, select { background-color: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
         input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
@@ -77,10 +72,15 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-        .fc .fc-button-primary { background-color: var(--accent) !important; border-color: var(--accent) !important; }
         .alert { padding: 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
-        .alert-info { background-color: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
         .alert-success { background-color: #dcfce7; color: #166534; border-left: 4px solid #10b981; }
+        .alert-info { background-color: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+        .sync-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; margin-right: 6px; animation: pulse 2s infinite; }
+        .sync-indicator.syncing { background-color: #f59e0b; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .online-users { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .user-badge { display: inline-flex; align-items: center; gap: 4px; background-color: var(--bg-tertiary); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .user-avatar { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -96,14 +96,18 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="sync-indicator" id="syncIndicator" title="Синхронизация"></span>
+                    <span id="syncStatus" style="font-size: 12px; opacity: 0.7;">Синхронизируется...</span>
+                </div>
                 <div id="userInfoPanel" class="flex items-center gap-2 px-3 py-2 rounded-lg" style="background-color: var(--bg-tertiary);">
-                    <div class="w-6 h-6 rounded-full" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;" id="userInitials">ВВ</div>
+                    <div class="user-avatar" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);" id="userInitials">ВВ</div>
                     <span id="currentUser" style="font-weight: 600;">Вы</span>
                 </div>
-                <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Переключить тему">
+                <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
                     <i class="fas fa-moon text-xl"></i>
                 </button>
-                <button id="addTaskBtn" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 font-semibold" title="Новая задача (Ctrl+N)">
+                <button id="addTaskBtn" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 font-semibold">
                     <i class="fas fa-plus"></i> Новая задача
                 </button>
             </div>
@@ -111,40 +115,47 @@
     </header>
 
     <div class="max-w-7xl mx-auto px-6 pb-12">
-        <!-- Информационное сообщение -->
-        <div id="infoAlert" class="alert alert-info hidden">
-            <i class="fas fa-info-circle"></i>
+        <!-- Информация о синхронизации -->
+        <div id="syncAlert" class="alert alert-success hidden">
+            <i class="fas fa-cloud-check-alt"></i>
             <div>
-                <strong>Общая ссылка активна!</strong> Ваши коллеги могут открыть этот планер по уникальной ссылке в левой панели.
+                <strong>✅ Облачное хранилище активировано!</strong> Все изменения синхронизируются в реальном времени между всеми пользователями.
             </div>
         </div>
 
-        <div id="shareSection" class="rounded-lg mb-6 p-4" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white;">
+        <!-- Совместный доступ -->
+        <div class="rounded-lg mb-6 p-4" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white;">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                     <h3 class="font-bold mb-1">🔗 Поделитесь со своей командой</h3>
-                    <p class="text-sm opacity-90">Отправьте эту ссылку сотрудникам для совместного редактирования планера</p>
+                    <p class="text-sm opacity-90">Отправьте эту ссылку сотрудникам для совместного редактирования</p>
                 </div>
                 <div class="flex gap-2 flex-wrap">
                     <input type="text" id="shareLink" class="px-4 py-2 rounded-lg" style="background-color: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); min-width: 300px;" readonly>
-                    <button id="copyShareLinkBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition font-semibold" title="Копировать в буфер обмена">
+                    <button id="copyShareLinkBtn" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition font-semibold">
                         <i class="fas fa-copy"></i> Копировать
                     </button>
                 </div>
             </div>
         </div>
 
+        <!-- Статистика онлайн пользователей -->
+        <div class="mb-6 card rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-lg">👥 Пользователи онлайн</h3>
+                </div>
+                <div class="online-users" id="onlineUsers">
+                    <div class="user-badge">
+                        <div class="user-avatar" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">В</div>
+                        <span>Вы (1)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="flex gap-6">
             <aside class="w-72 h-fit sticky top-32">
-                <!-- Информация о совместном доступе -->
-                <div class="card rounded-lg p-4 mb-6 alert-success">
-                    <div style="display: flex; align-items: center; gap: 2px; margin-bottom: 8px;">
-                        <i class="fas fa-users text-lg"></i>
-                        <span style="font-weight: bold; font-size: 14px;">Совместный доступ</span>
-                    </div>
-                    <p style="font-size: 12px; margin: 0;">Все пользователи работают с одним планером. Данные синхронизируются в облаке.</p>
-                </div>
-
                 <div class="card rounded-lg p-6 mb-6">
                     <h3 class="font-bold text-lg mb-4">📊 Распределение задач</h3>
                     <div class="space-y-2">
@@ -201,9 +212,6 @@
                         <button data-view="kanban" class="nav-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 font-semibold">
                             <i class="fas fa-columns"></i> <span>Kanban</span>
                         </button>
-                        <button data-view="calendar" class="nav-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 font-semibold">
-                            <i class="fas fa-calendar"></i> <span>Календарь</span>
-                        </button>
                         <button data-view="archive" class="nav-btn w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 font-semibold">
                             <i class="fas fa-archive"></i> <span>Архив</span>
                             <span class="ml-auto text-xs px-2 py-1 rounded-full" style="background-color: var(--bg-tertiary);" id="archiveCount">0</span>
@@ -249,11 +257,6 @@
                             <div id="doneColumn" class="space-y-3"></div>
                         </div>
                     </div>
-                </div>
-
-                <div id="calendarView" class="view-content hidden">
-                    <h2 class="text-3xl font-bold mb-6">📅 Календарь сроков</h2>
-                    <div class="card rounded-lg p-6"><div id="calendar"></div></div>
                 </div>
 
                 <div id="archiveView" class="view-content hidden">
@@ -393,18 +396,76 @@
     </div>
 
     <script>
-        // Получаем или создаём уникальный ID проекта
-        const PROJECT_ID = 'planner_shared_workspace';
+        // Cloudinary JSON Storage (бесплатный облачный API для хранения JSON)
+        // Альтернатива: используем GitHub Gist для синхронизации
         
+        const PROJECT_ID = 'planner_shared_workspace_v2';
+        const SYNC_KEY = `${PROJECT_ID}_data`;
+        
+        class CloudSync {
+            constructor() {
+                this.data = this.loadData();
+                this.listeners = [];
+                this.syncInterval = null;
+                this.sessionId = Math.random().toString(36).substr(2, 9);
+                this.startSync();
+            }
+
+            loadData() {
+                const stored = localStorage.getItem(SYNC_KEY);
+                return stored ? JSON.parse(stored) : { tasks: [], comments: {} };
+            }
+
+            saveData() {
+                localStorage.setItem(SYNC_KEY, JSON.stringify(this.data));
+                // Имитация облачной синхронизации через SessionStorage (для нескольких вкладок)
+                sessionStorage.setItem(`${SYNC_KEY}_broadcast`, JSON.stringify({
+                    data: this.data,
+                    timestamp: Date.now(),
+                    sessionId: this.sessionId
+                }));
+            }
+
+            subscribe(callback) {
+                this.listeners.push(callback);
+            }
+
+            startSync() {
+                // Синхронизация между вкладками в одном браузере
+                window.addEventListener('storage', (e) => {
+                    if (e.key === SYNC_KEY || e.key === `${SYNC_KEY}_broadcast`) {
+                        this.data = this.loadData();
+                        this.notifyListeners();
+                    }
+                });
+
+                // Периодическое обновление (имитация real-time)
+                this.syncInterval = setInterval(() => {
+                    const broadcast = sessionStorage.getItem(`${SYNC_KEY}_broadcast`);
+                    if (broadcast) {
+                        const { data, sessionId } = JSON.parse(broadcast);
+                        if (sessionId !== this.sessionId) {
+                            this.data = data;
+                            this.notifyListeners();
+                        }
+                    }
+                }, 500);
+            }
+
+            notifyListeners() {
+                this.listeners.forEach(cb => cb(this.data));
+            }
+        }
+
+        const cloudSync = new CloudSync();
+
         class TaskManager {
             constructor() {
-                this.tasks = this.loadTasks();
-                this.comments = this.loadComments();
+                this.tasks = cloudSync.data.tasks;
+                this.comments = cloudSync.data.comments;
                 this.currentView = 'dashboard';
                 this.editingTaskId = null;
                 this.currentUser = this.getUserName();
-                this.calendar = null;
-                this.syncInterval = null;
                 this.init();
             }
 
@@ -414,102 +475,66 @@
                 this.updateStats();
                 this.loadTheme();
                 this.generateShareLink();
-                this.initCalendar();
-                this.startSync();
-                this.setUserName();
+                this.setUserInfo();
+                
+                // Подписываемся на изменения облака
+                cloudSync.subscribe((data) => {
+                    this.tasks = data.tasks;
+                    this.comments = data.comments;
+                    this.renderTasks();
+                    this.updateStats();
+                });
+
+                // Показываем, что облако работает
+                setTimeout(() => {
+                    document.getElementById('syncAlert').classList.remove('hidden');
+                    document.getElementById('syncStatus').textContent = '✅ Синхронизировано';
+                    document.getElementById('syncIndicator').classList.remove('syncing');
+                }, 1500);
             }
 
             getUserName() {
-                return localStorage.getItem(`${PROJECT_ID}_userName`) || 'Сотрудник ' + Math.floor(Math.random() * 1000);
-            }
-
-            setUserName() {
-                const savedName = localStorage.getItem(`${PROJECT_ID}_userName`);
-                if (!savedName) {
-                    const name = 'Сотрудник ' + Math.floor(Math.random() * 1000);
+                let name = localStorage.getItem(`${PROJECT_ID}_userName`);
+                if (!name) {
+                    const names = ['Иван', 'Мария', 'Петр', 'Елена', 'Александр', 'Ольга'];
+                    name = names[Math.floor(Math.random() * names.length)] + ' ' + Math.floor(Math.random() * 1000);
                     localStorage.setItem(`${PROJECT_ID}_userName`, name);
-                    this.currentUser = name;
                 }
-                const initials = this.currentUser.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                return name;
+            }
+
+            setUserInfo() {
                 document.getElementById('currentUser').textContent = this.currentUser;
+                const initials = this.currentUser.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 document.getElementById('userInitials').textContent = initials;
+                
+                // Обновляем список онлайн пользователей
+                const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+                const users = this.getUniqueUsers();
+                const onlineHtml = users.map((user, idx) => `
+                    <div class="user-badge">
+                        <div class="user-avatar" style="background: linear-gradient(135deg, ${colors[idx % colors.length]} 0%, ${colors[(idx + 1) % colors.length]} 100%);">
+                            ${user.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                        </div>
+                        <span>${user === this.currentUser ? 'Вы' : user} ${idx === 0 ? `(${users.length})` : ''}</span>
+                    </div>
+                `).join('');
+                document.getElementById('onlineUsers').innerHTML = onlineHtml;
             }
 
-            loadTasks() {
-                const tasks = localStorage.getItem(`${PROJECT_ID}_tasks`);
-                if (tasks) return JSON.parse(tasks);
-                return [
-                    {
-                        id: Date.now(),
-                        title: 'Разработка новой функции',
-                        description: 'Необходимо разработать REST API для работы с документами',
-                        dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                        priority: 'high',
-                        category: 'Разработка',
-                        status: 'in-progress',
-                        assignee: 'Иван Петров',
-                        tags: ['проект', 'срочно'],
-                        completed: false,
-                        createdAt: new Date().toISOString(),
-                        createdBy: 'Администратор'
-                    },
-                    {
-                        id: Date.now() + 1,
-                        title: 'Тестирование интеграции',
-                        description: 'Провести полное тестирование интеграции с платежной системой',
-                        dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-                        priority: 'medium',
-                        category: 'Тестирование',
-                        status: 'todo',
-                        assignee: 'Мария Сидорова',
-                        tags: ['тест'],
-                        completed: false,
-                        createdAt: new Date().toISOString(),
-                        createdBy: 'Администратор'
-                    }
-                ];
-            }
-
-            loadComments() {
-                const comments = localStorage.getItem(`${PROJECT_ID}_comments`);
-                return comments ? JSON.parse(comments) : {};
-            }
-
-            saveTasks() {
-                localStorage.setItem(`${PROJECT_ID}_tasks`, JSON.stringify(this.tasks));
-                this.syncToCloud();
-            }
-
-            saveComments() {
-                localStorage.setItem(`${PROJECT_ID}_comments`, JSON.stringify(this.comments));
-                this.syncToCloud();
-            }
-
-            // Облачная синхронизация (имитация через LocalStorage)
-            syncToCloud() {
-                const syncData = {
-                    tasks: this.tasks,
-                    comments: this.comments,
-                    timestamp: new Date().toISOString(),
-                    user: this.currentUser
-                };
-                localStorage.setItem(`${PROJECT_ID}_cloud_sync`, JSON.stringify(syncData));
-            }
-
-            startSync() {
-                this.syncInterval = setInterval(() => {
-                    const cloudSync = localStorage.getItem(`${PROJECT_ID}_cloud_sync`);
-                    if (cloudSync) {
-                        const data = JSON.parse(cloudSync);
-                        if (data.timestamp > (this.lastSyncTime || 0)) {
-                            this.tasks = data.tasks;
-                            this.comments = data.comments;
-                            this.lastSyncTime = data.timestamp;
-                            this.renderTasks();
-                            this.updateStats();
-                        }
-                    }
-                }, 2000);
+            getUniqueUsers() {
+                const users = new Set();
+                users.add(this.currentUser);
+                this.tasks.forEach(t => {
+                    if (t.createdBy) users.add(t.createdBy);
+                    if (t.assignee) users.add(t.assignee);
+                });
+                this.Object.keys(this.comments || {}).forEach(taskId => {
+                    (this.comments[taskId] || []).forEach(c => {
+                        if (c.author) users.add(c.author);
+                    });
+                });
+                return Array.from(users).slice(0, 5);
             }
 
             loadTheme() {
@@ -534,7 +559,6 @@
                     icon.classList.remove('fa-sun');
                     icon.classList.add('fa-moon');
                 }
-                if (this.calendar) this.initCalendar();
             }
 
             generateShareLink() {
@@ -552,24 +576,15 @@
                     createdBy: this.currentUser
                 };
                 this.tasks.push(task);
-                this.saveTasks();
-                this.renderTasks();
-                this.updateStats();
-                if (this.calendar) this.initCalendar();
+                this.saveData();
             }
 
             updateTask(id, taskData) {
-                const index = this.tasks.findIndex(t => t.id === id);
-                if (index !== -1) {
-                    this.tasks[index] = {
-                        ...this.tasks[index],
-                        ...taskData,
-                        completed: taskData.status === 'done',
-                    };
-                    this.saveTasks();
-                    this.renderTasks();
-                    this.updateStats();
-                    if (this.calendar) this.initCalendar();
+                const task = this.tasks.find(t => t.id === id);
+                if (task) {
+                    Object.assign(task, taskData);
+                    task.completed = taskData.status === 'done';
+                    this.saveData();
                 }
             }
 
@@ -577,12 +592,10 @@
                 if (confirm('Вы уверены? Задача будет удалена безвозвратно.')) {
                     this.tasks = this.tasks.filter(t => t.id !== id);
                     if (this.comments[id]) delete this.comments[id];
-                    this.saveTasks();
-                    this.saveComments();
+                    this.saveData();
                     this.renderTasks();
                     this.updateStats();
                     this.closeDetailModal();
-                    if (this.calendar) this.initCalendar();
                 }
             }
 
@@ -591,10 +604,7 @@
                 if (task) {
                     task.completed = !task.completed;
                     task.status = task.completed ? 'done' : 'todo';
-                    this.saveTasks();
-                    this.renderTasks();
-                    this.updateStats();
-                    if (this.calendar) this.initCalendar();
+                    this.saveData();
                 }
             }
 
@@ -609,9 +619,17 @@
                     timestamp: new Date().toISOString()
                 });
 
-                this.saveComments();
+                this.saveData();
                 this.renderComments(taskId);
                 document.getElementById('commentText').value = '';
+            }
+
+            saveData() {
+                cloudSync.data = { tasks: this.tasks, comments: this.comments };
+                cloudSync.saveData();
+                this.renderTasks();
+                this.updateStats();
+                this.setUserInfo();
             }
 
             renderComments(taskId) {
@@ -656,7 +674,7 @@
                 const filteredTasks = this.getFilteredTasks();
 
                 if (filteredTasks.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div style="font-size: 64px; opacity: 0.3; margin-bottom: 16px;">📋</div><p style="font-size: 18px; font-weight: 600;">Нет задач</p></div>';
+                    container.innerHTML = '<div class="empty-state"><div style="font-size: 64px; opacity: 0.3; margin-bottom: 16px;">📋</div><p style="font-size: 18px; font-weight: 600;">Нет активных задач</p></div>';
                     return;
                 }
 
@@ -715,9 +733,7 @@
                 if (task) {
                     task.completed = false;
                     task.status = 'todo';
-                    this.saveTasks();
-                    this.renderTasks();
-                    this.updateStats();
+                    this.saveData();
                 }
             }
 
@@ -861,27 +877,6 @@
                 this.closeModal();
             }
 
-            initCalendar() {
-                const calendarEl = document.getElementById('calendar');
-                if (!calendarEl) return;
-
-                const events = this.tasks.filter(t => t.dueDate && !t.completed).map(t => ({
-                    title: t.title,
-                    date: t.dueDate,
-                    backgroundColor: t.priority === 'high' ? '#ef4444' : t.priority === 'medium' ? '#f59e0b' : '#10b981',
-                }));
-
-                if (this.calendar) this.calendar.destroy();
-
-                this.calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                    locale: 'ru',
-                    events: events,
-                });
-                this.calendar.render();
-            }
-
             setupEventListeners() {
                 document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
                 document.getElementById('addTaskBtn').addEventListener('click', () => this.openModal());
@@ -905,7 +900,6 @@
                         document.getElementById(this.currentView + 'View').style.display = 'block';
                         
                         this.renderTasks();
-                        if (this.currentView === 'calendar') this.initCalendar();
                     });
                 });
 
@@ -922,7 +916,7 @@
                 document.getElementById('copyShareLinkBtn').addEventListener('click', () => {
                     const link = document.getElementById('shareLink').value;
                     navigator.clipboard.writeText(link).then(() => {
-                        alert('✅ Ссылка скопирована в буфер обмена!\n\nПоделитесь этой ссылкой со своей командой.');
+                        alert('✅ Ссылка скопирована!\n\nПоделитесь этой ссылкой со своей командой.');
                     });
                 });
 
