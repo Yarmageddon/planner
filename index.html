@@ -6,9 +6,13 @@
     <title>Планер задач для Отдела развития государственных услуг</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <!-- Firebase SDK v9+ (модульная версия) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, onValue, set, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+
+        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, update, remove };
+    </script>
     <style>
         * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         :root {
@@ -76,17 +80,13 @@
         ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         .sync-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; margin-right: 6px; }
-        .sync-indicator.syncing { background-color: #f59e0b; animation: pulse 1s infinite; }
         .sync-indicator.error { background-color: #ef4444; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .online-users { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .user-badge { display: inline-flex; align-items: center; gap: 4px; background-color: var(--bg-tertiary); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .user-avatar { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold; }
         .alert { padding: 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
         .alert-success { background-color: #dcfce7; color: #166534; border-left: 4px solid #10b981; }
         .alert-error { background-color: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
-        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(99, 102, 241, 0.3); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -121,22 +121,13 @@
     </header>
 
     <div class="max-w-7xl mx-auto px-6 pb-12">
-        <!-- Статус подключения -->
-        <div id="statusAlert" class="alert alert-success hidden">
-            <i class="fas fa-cloud-check-alt"></i>
-            <div>
-                <strong>✅ Облачная синхронизация активна!</strong> Все изменения автоматически синхронизируются в реальном времени.
-            </div>
-        </div>
-
         <div id="errorAlert" class="alert alert-error hidden">
             <i class="fas fa-exclamation-triangle"></i>
             <div id="errorMessage">
-                <strong>⚠️ Ошибка подключения!</strong> Проверьте интернет-соединение.
+                <strong>⚠️ Ошибка подключения!</strong> Проверьте правила базы данных Firebase.
             </div>
         </div>
 
-        <!-- Совместный доступ -->
         <div class="rounded-lg mb-6 p-4" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white;">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
@@ -152,12 +143,9 @@
             </div>
         </div>
 
-        <!-- Пользователи онлайн -->
         <div class="mb-6 card rounded-lg p-4">
             <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="font-bold text-lg">👥 Пользователи онлайн</h3>
-                </div>
+                <h3 class="font-bold text-lg">👥 Пользователи онлайн</h3>
                 <div class="online-users" id="onlineUsers">
                     <div class="user-badge">
                         <div class="user-avatar" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">В</div>
@@ -410,31 +398,22 @@
         </div>
     </div>
 
-    <script>
-        // ============================================
-        // FIREBASE CONFIGURATION
-        // ============================================
-        // Используем общую Firebase базу для демонстрации
-        // Вы можете создать свою в firebase.google.com
-        
-       const firebaseConfig = {
-    apiKey: "AIzaSyCt0zVl8Ncm1sQA03jRaRqbeLJQMvjfdO8",
-    authDomain: "planner-8648b.firebaseapp.com",
-    databaseURL: "https://planner-8648b-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "planner-8648b",
-    storageBucket: "planner-8648b.firebasestorage.app",
-    messagingSenderId: "746693940856",
-    appId: "1:746693940856:web:bf8b7af547df97d4b3bf8d",
-    measurementId: "G-CBQ9286N9P"
-};
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, onValue, set, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
-        // Инициализируем Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const firebaseConfig = {
+            apiKey: "AIzaSyCt0zVl8Ncm1sQA03jRaRqbeLJQMvjfdO8",
+            authDomain: "planner-8648b.firebaseapp.com",
+            databaseURL: "https://planner-8648b-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "planner-8648b",
+            storageBucket: "planner-8648b.firebasestorage.app",
+            messagingSenderId: "746693940856",
+            appId: "1:746693940856:web:bf8b7af547df97d4b3bf8d"
+        };
 
-        // ============================================
-        // TASK MANAGER CLASS
-        // ============================================
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
         class TaskManager {
             constructor() {
@@ -443,7 +422,6 @@
                 this.currentView = 'dashboard';
                 this.editingTaskId = null;
                 this.currentUser = this.getUserName();
-                this.dbRef = null;
                 this.isConnected = false;
                 this.init();
             }
@@ -457,37 +435,27 @@
             }
 
             setupFirebase() {
-                // Проверяем подключение
-                const connectedRef = database.ref('.info/connected');
-                connectedRef.on('value', (snap) => {
-                    if (snap.val() === true) {
-                        this.isConnected = true;
-                        document.getElementById('syncIndicator').classList.remove('error', 'syncing');
-                        document.getElementById('syncIndicator').classList.add('pulse');
-                        document.getElementById('syncStatus').textContent = '✅ Синхронизировано';
-                        document.getElementById('statusAlert').classList.remove('hidden');
-                        document.getElementById('errorAlert').classList.add('hidden');
-                    } else {
-                        this.isConnected = false;
-                        document.getElementById('syncIndicator').classList.add('error');
-                        document.getElementById('syncStatus').textContent = '❌ Отключено';
-                        document.getElementById('errorAlert').classList.remove('hidden');
-                    }
-                });
-
-                // Загружаем задачи в реальном времени
-                const tasksRef = database.ref('tasks');
-                tasksRef.on('value', (snapshot) => {
+                const tasksRef = ref(database, 'tasks');
+                onValue(tasksRef, (snapshot) => {
                     const data = snapshot.val();
                     this.tasks = data ? Object.values(data) : [];
+                    this.isConnected = true;
+                    document.getElementById('syncIndicator').style.backgroundColor = '#10b981';
+                    document.getElementById('syncStatus').textContent = '✅ Синхронизировано';
+                    document.getElementById('errorAlert').classList.add('hidden');
                     this.renderTasks();
                     this.updateStats();
                     this.setUserInfo();
+                }, (error) => {
+                    this.isConnected = false;
+                    document.getElementById('syncIndicator').style.backgroundColor = '#ef4444';
+                    document.getElementById('syncStatus').textContent = '❌ Ошибка подключения';
+                    document.getElementById('errorAlert').classList.remove('hidden');
+                    console.error('Ошибка Firebase:', error.message);
                 });
 
-                // Загружаем комментарии в реальном времени
-                const commentsRef = database.ref('comments');
-                commentsRef.on('value', (snapshot) => {
+                const commentsRef = ref(database, 'comments');
+                onValue(commentsRef, (snapshot) => {
                     const data = snapshot.val();
                     this.comments = data || {};
                 });
@@ -496,7 +464,7 @@
             getUserName() {
                 let name = localStorage.getItem('planner_userName');
                 if (!name) {
-                    const names = ['Иван', 'Мария', 'Петр', 'Елена', 'Александр', 'Ольга', 'Дмитрий', 'Анна'];
+                    const names = ['Иван', 'Мария', 'Петр', 'Елена', 'Александр', 'Ольга'];
                     name = names[Math.floor(Math.random() * names.length)] + ' ' + Math.floor(Math.random() * 999);
                     localStorage.setItem('planner_userName', name);
                 }
@@ -507,34 +475,12 @@
                 document.getElementById('currentUser').textContent = this.currentUser;
                 const initials = this.currentUser.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 document.getElementById('userInitials').textContent = initials;
-
-                // Получаем уникальных пользователей
-                const users = new Set();
-                users.add(this.currentUser);
-                this.tasks.forEach(t => {
-                    if (t.createdBy) users.add(t.createdBy);
-                    if (t.assignee) users.add(t.assignee);
-                });
-
-                const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
-                const usersList = Array.from(users).slice(0, 5);
-                const onlineHtml = usersList.map((user, idx) => `
-                    <div class="user-badge">
-                        <div class="user-avatar" style="background: linear-gradient(135deg, ${colors[idx % colors.length]} 0%, ${colors[(idx + 1) % colors.length]} 100%);">
-                            ${user.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                        </div>
-                        <span>${user === this.currentUser ? 'Вы' : user}</span>
-                    </div>
-                `).join('');
-                document.getElementById('onlineUsers').innerHTML = onlineHtml || '<div class="user-badge">Загрузка...</div>';
             }
 
             loadTheme() {
                 const theme = localStorage.getItem('planner_theme') || 'light';
                 if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
-                    document.querySelector('#themeToggle i').classList.remove('fa-moon');
-                    document.querySelector('#themeToggle i').classList.add('fa-sun');
                 }
             }
 
@@ -542,14 +488,6 @@
                 document.documentElement.classList.toggle('dark');
                 const isDark = document.documentElement.classList.contains('dark');
                 localStorage.setItem('planner_theme', isDark ? 'dark' : 'light');
-                const icon = document.querySelector('#themeToggle i');
-                if (isDark) {
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                } else {
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }
             }
 
             generateShareLink() {
@@ -558,18 +496,18 @@
             }
 
             addTask(taskData) {
+                const taskId = Date.now().toString();
                 const task = {
-                    id: Date.now().toString(),
+                    id: taskId,
                     ...taskData,
                     completed: taskData.status === 'done',
                     createdAt: new Date().toISOString(),
                     createdBy: this.currentUser
                 };
 
-                // Загружаем в Firebase
-                database.ref('tasks/' + task.id).set(task).catch(err => {
+                set(ref(database, 'tasks/' + taskId), task).catch(err => {
                     console.error('Ошибка при сохранении:', err);
-                    document.getElementById('errorAlert').classList.remove('hidden');
+                    alert('Ошибка при сохранении задачи!');
                 });
             }
 
@@ -578,15 +516,15 @@
                     ...taskData,
                     completed: taskData.status === 'done'
                 };
-                database.ref('tasks/' + id).update(updates).catch(err => {
+                update(ref(database, 'tasks/' + id), updates).catch(err => {
                     console.error('Ошибка при обновлении:', err);
                 });
             }
 
             deleteTask(id) {
                 if (confirm('Вы уверены? Задача будет удалена безвозвратно.')) {
-                    database.ref('tasks/' + id).remove();
-                    database.ref('comments/' + id).remove();
+                    remove(ref(database, 'tasks/' + id));
+                    remove(ref(database, 'comments/' + id));
                 }
             }
 
@@ -594,7 +532,7 @@
                 const task = this.tasks.find(t => t.id === id);
                 if (task) {
                     const newStatus = task.completed ? 'todo' : 'done';
-                    database.ref('tasks/' + id).update({
+                    update(ref(database, 'tasks/' + id), {
                         completed: !task.completed,
                         status: newStatus
                     });
@@ -612,7 +550,7 @@
                     timestamp: new Date().toISOString()
                 };
 
-                database.ref('comments/' + taskId + '/' + commentId).set(comment);
+                set(ref(database, 'comments/' + taskId + '/' + commentId), comment);
                 document.getElementById('commentText').value = '';
             }
 
@@ -697,11 +635,9 @@
                         <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div style="flex: 1;">
                                 <h4 style="font-weight: 600; font-size: 18px; margin: 0 0 8px 0;">${task.title}</h4>
-                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                    <span class="badge badge-priority-${task.priority}">✅ Выполнено</span>
-                                </div>
+                                <span class="badge badge-priority-${task.priority}">✅ Выполнено</span>
                             </div>
-                            <button onclick="taskManager.restoreTask('${task.id}')" style="padding: 8px 16px; border-radius: 8px; background-color: var(--bg-tertiary); border: none; cursor: pointer; font-weight: 600; color: var(--text-primary);">
+                            <button onclick="window.taskManager.restoreTask('${task.id}')" style="padding: 8px 16px; border-radius: 8px; background-color: var(--bg-tertiary); border: none; cursor: pointer; font-weight: 600;">
                                 <i class="fas fa-undo"></i> Восстановить
                             </button>
                         </div>
@@ -712,7 +648,7 @@
             }
 
             restoreTask(id) {
-                database.ref('tasks/' + id).update({
+                update(ref(database, 'tasks/' + id), {
                     completed: false,
                     status: 'todo'
                 });
@@ -720,26 +656,24 @@
 
             createTaskCard(task) {
                 return `
-                    <div class="task-card card rounded-lg p-5 priority-${task.priority}" onclick="taskManager.openDetailModal('${task.id}')">
-                        <div style="display: flex; gap: 16px; align-items: start;">
-                            <button onclick="event.stopPropagation(); taskManager.toggleTaskComplete('${task.id}')" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 0;">
+                    <div class="task-card card rounded-lg p-5 priority-${task.priority}" onclick="window.taskManager.openDetailModal('${task.id}')">
+                        <div style="display: flex; gap: 16px;">
+                            <button onclick="event.stopPropagation(); window.taskManager.toggleTaskComplete('${task.id}')" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 0;">
                                 ${task.completed ? '✅' : '⭕'}
                             </button>
                             <div style="flex: 1;">
-                                <h4 style="font-weight: bold; font-size: 18px; margin: 0 0 8px 0; ${task.completed ? 'opacity: 0.6; text-decoration: line-through;' : ''}">${task.title}</h4>
-                                ${task.description ? `<p style="font-size: 14px; opacity: 0.75; margin: 0 0 12px 0;">${task.description}</p>` : ''}
+                                <h4 style="font-weight: bold; font-size: 18px; margin: 0 0 8px 0;">${task.title}</h4>
                                 <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px;">
                                     <span class="badge badge-priority-${task.priority}">${task.priority === 'high' ? '🔴 Высокий' : task.priority === 'medium' ? '🟡 Средний' : '🟢 Низкий'}</span>
-                                    ${task.category ? `<span style="opacity: 0.6;"><i class="fas fa-folder"></i> ${task.category}</span>` : ''}
                                     ${task.assignee ? `<span style="opacity: 0.6;"><i class="fas fa-user"></i> ${task.assignee}</span>` : ''}
                                     ${task.dueDate ? `<span style="opacity: 0.6;"><i class="fas fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString('ru-RU')}</span>` : ''}
                                 </div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button onclick="event.stopPropagation(); taskManager.openEditModal('${task.id}')" style="padding: 8px; border-radius: 8px; background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 16px;">
+                                <button onclick="event.stopPropagation(); window.taskManager.openEditModal('${task.id}')" style="padding: 8px; border: none; background: none; color: #3b82f6; cursor: pointer;">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button onclick="event.stopPropagation(); taskManager.deleteTask('${task.id}')" style="padding: 8px; border-radius: 8px; background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px;">
+                                <button onclick="event.stopPropagation(); window.taskManager.deleteTask('${task.id}')" style="padding: 8px; border: none; background: none; color: #ef4444; cursor: pointer;">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -750,17 +684,12 @@
 
             createKanbanCard(task) {
                 return `
-                    <div class="task-card card rounded-lg p-4 priority-${task.priority}" onclick="taskManager.openDetailModal('${task.id}')">
+                    <div class="task-card card rounded-lg p-4 priority-${task.priority}" onclick="window.taskManager.openDetailModal('${task.id}')">
                         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <button onclick="event.stopPropagation(); taskManager.toggleTaskComplete('${task.id}')" style="background: none; border: none; font-size: 20px; cursor: pointer; padding: 0;">
+                            <button onclick="event.stopPropagation(); window.taskManager.toggleTaskComplete('${task.id}')" style="background: none; border: none; font-size: 20px; cursor: pointer; padding: 0;">
                                 ${task.completed ? '✅' : '⭕'}
                             </button>
-                            <h4 style="font-weight: 600; flex: 1; margin: 0; ${task.completed ? 'opacity: 0.6; text-decoration: line-through;' : ''}">${task.title}</h4>
-                        </div>
-                        ${task.description ? `<p style="font-size: 12px; opacity: 0.75; margin: 0 0 8px 0;">${task.description}</p>` : ''}
-                        <div style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 11px;">
-                            ${task.assignee ? `<span style="opacity: 0.6;"><i class="fas fa-user-circle"></i> ${task.assignee}</span>` : ''}
-                            ${task.dueDate ? `<span style="opacity: 0.6;"><i class="fas fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString('ru-RU')}</span>` : ''}
+                            <h4 style="font-weight: 600; flex: 1; margin: 0;">${task.title}</h4>
                         </div>
                     </div>
                 `;
@@ -787,14 +716,12 @@
                 document.getElementById('modalTitle').textContent = 'Новая задача';
                 document.getElementById('taskForm').reset();
                 document.getElementById('taskPriority').value = 'medium';
-                document.getElementById('submitBtnText').textContent = 'Сохранить задачу';
                 this.editingTaskId = null;
                 document.getElementById('taskModal').classList.add('active');
             }
 
             closeModal() {
                 document.getElementById('taskModal').classList.remove('active');
-                this.editingTaskId = null;
             }
 
             openEditModal(id) {
@@ -810,7 +737,6 @@
                 document.getElementById('taskStatus').value = task.status;
                 document.getElementById('taskAssignee').value = task.assignee || '';
                 document.getElementById('taskTags').value = (task.tags || []).join(', ');
-                document.getElementById('submitBtnText').textContent = 'Обновить задачу';
 
                 this.editingTaskId = id;
                 document.getElementById('taskModal').classList.add('active');
@@ -836,16 +762,10 @@
 
             closeDetailModal() {
                 document.getElementById('taskDetailModal').classList.remove('active');
-                window.currentDetailTaskId = null;
             }
 
             handleFormSubmit(e) {
                 e.preventDefault();
-                
-                const submitBtn = e.target.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
-                const originalText = document.getElementById('submitBtnText').textContent;
-                document.getElementById('submitBtnText').textContent = '⏳ Сохранение...';
 
                 const taskData = {
                     title: document.getElementById('taskTitle').value,
@@ -858,17 +778,13 @@
                     tags: document.getElementById('taskTags').value.split(',').map(t => t.trim()).filter(t => t),
                 };
 
-                setTimeout(() => {
-                    if (this.editingTaskId) {
-                        this.updateTask(this.editingTaskId, taskData);
-                    } else {
-                        this.addTask(taskData);
-                    }
-                    
-                    submitBtn.disabled = false;
-                    document.getElementById('submitBtnText').textContent = originalText;
-                    this.closeModal();
-                }, 500);
+                if (this.editingTaskId) {
+                    this.updateTask(this.editingTaskId, taskData);
+                } else {
+                    this.addTask(taskData);
+                }
+
+                this.closeModal();
             }
 
             setupEventListeners() {
@@ -878,9 +794,14 @@
                 document.getElementById('cancelBtn').addEventListener('click', () => this.closeModal());
                 document.getElementById('closeDetailModal').addEventListener('click', () => this.closeDetailModal());
                 document.getElementById('closeDetailBtn').addEventListener('click', () => this.closeDetailModal());
-                
-                document.getElementById('taskModal').addEventListener('click', (e) => { if (e.target.id === 'taskModal') this.closeModal(); });
-                document.getElementById('taskDetailModal').addEventListener('click', (e) => { if (e.target.id === 'taskDetailModal') this.closeDetailModal(); });
+
+                document.getElementById('taskModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'taskModal') this.closeModal();
+                });
+
+                document.getElementById('taskDetailModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'taskDetailModal') this.closeDetailModal();
+                });
 
                 document.getElementById('taskForm').addEventListener('submit', (e) => this.handleFormSubmit(e));
 
@@ -889,10 +810,10 @@
                         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                         e.currentTarget.classList.add('active');
                         this.currentView = e.currentTarget.dataset.view;
-                        
+
                         document.querySelectorAll('.view-content').forEach(v => v.style.display = 'none');
                         document.getElementById(this.currentView + 'View').style.display = 'block';
-                        
+
                         this.renderTasks();
                     });
                 });
@@ -910,7 +831,7 @@
                 document.getElementById('copyShareLinkBtn').addEventListener('click', () => {
                     const link = document.getElementById('shareLink').value;
                     navigator.clipboard.writeText(link).then(() => {
-                        alert('✅ Ссылка скопирована в буфер обмена!\n\nПоделитесь этой ссылкой со своей командой для совместной работы.');
+                        alert('✅ Ссылка скопирована!');
                     });
                 });
 
@@ -927,7 +848,7 @@
             }
         }
 
-        const taskManager = new TaskManager();
+        window.taskManager = new TaskManager();
     </script>
 </body>
 </html>
