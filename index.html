@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        /* базовые переменные (без изменений) */
+        /* все стили без изменений (адаптивная версия) */
         * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         :root {
             --bg-primary: #ffffff;
@@ -100,7 +100,7 @@
             transition: all 0.2s ease;
             border-radius: 6px;
             padding: 8px 12px;
-            font-size: 14px; /* для удобства на мобилках */
+            font-size: 14px;
         }
         input:focus, textarea:focus, select:focus {
             outline: none;
@@ -145,7 +145,6 @@
         .sync-indicator.online { background-color: var(--success); }
         .sync-indicator.offline { background-color: var(--danger); }
 
-        /* Календарь */
         .calendar-day {
             padding: 4px;
             text-align: center;
@@ -209,7 +208,6 @@
         }
         html.dark .wip-warning { background-color: #4a1f1a; }
 
-        /* Плавающая ссылка - адаптив */
         .share-link-float {
             position: fixed;
             bottom: 12px;
@@ -246,14 +244,13 @@
         }
         .share-link-float button:hover { background: var(--border-color); }
         .share-link-float .link-label {
-            display: none; /* скрываем текст "Ссылка" на мобилках */
+            display: none;
         }
         @media (min-width: 640px) {
             .share-link-float .link-label { display: inline; }
             .share-link-float input { width: 140px; }
         }
 
-        /* Описание в карточке */
         .task-description-preview {
             font-size: 12px;
             color: var(--text-secondary);
@@ -264,8 +261,7 @@
             overflow: hidden;
         }
 
-        /* ===== АДАПТИВНОСТЬ ===== */
-        /* Мобильная навигация: боковая панель становится горизонтальной */
+        /* Адаптивность */
         @media (max-width: 767px) {
             .main-layout {
                 flex-direction: column !important;
@@ -312,11 +308,9 @@
             .sidebar-nav .nav-btn i {
                 margin-right: 4px;
             }
-            /* Скрываем заголовки "Приоритеты", "Завершено" в мобильной панели */
             .sidebar-nav .card h3 {
                 display: none;
             }
-            /* Шапка */
             header .header-title h1 {
                 font-size: 18px;
             }
@@ -339,7 +333,6 @@
             #addTaskBtn {
                 padding: 6px 10px;
             }
-            /* Фильтры */
             .filters-row {
                 flex-wrap: nowrap;
                 overflow-x: auto;
@@ -358,12 +351,10 @@
                 min-width: 120px;
                 flex: 1;
             }
-            /* Канбан - колонки в столбец */
             .kanban-grid {
                 grid-template-columns: 1fr !important;
                 gap: 12px;
             }
-            /* Календарь - ячейки меньше */
             .calendar-day {
                 min-height: 50px;
                 padding: 2px;
@@ -377,7 +368,6 @@
             .calendar-day .task-preview .assignee {
                 font-size: 8px;
             }
-            /* Модалки */
             .modal-content {
                 padding: 16px;
             }
@@ -388,7 +378,6 @@
                 grid-template-columns: 1fr !important;
             }
         }
-        /* Для очень маленьких экранов */
         @media (max-width: 480px) {
             .share-link-float {
                 bottom: 8px;
@@ -441,17 +430,14 @@
                 </div>
             </div>
             <div class="flex items-center gap-3 header-actions">
-                <!-- Синхронизация -->
                 <div class="flex items-center gap-1 text-sm">
                     <span class="sync-indicator online" id="syncIndicator"></span>
                     <span id="syncStatus" style="font-size: 10px; opacity: 0.7; display: none;">Синхр.</span>
                 </div>
-                <!-- WIP -->
                 <div id="wipIndicator" class="flex items-center gap-1 text-sm" style="display: none;">
                     <i class="fas fa-tasks"></i>
                     <span id="wipCount">0</span>
                 </div>
-                <!-- Пользователь -->
                 <div class="flex items-center gap-1 px-2 py-1 rounded-lg user-select-wrap" style="background-color: var(--bg-tertiary);">
                     <i class="fas fa-user-circle" style="color: var(--accent);"></i>
                     <select id="currentUserSelect" class="bg-transparent border-none font-semibold text-sm focus:ring-0" style="padding: 2px 4px; color: var(--text-primary); max-width: 80px;">
@@ -468,9 +454,8 @@
     </header>
 
     <div class="max-w-7xl mx-auto px-3 pb-12">
-        <!-- Основной макет: на мобилках колонка -->
         <div class="flex flex-col md:flex-row gap-4 main-layout">
-            <!-- Боковая панель (на мобилках становится горизонтальной) -->
+            <!-- Боковая панель -->
             <aside class="w-full md:w-64 h-fit md:sticky md:top-24 sidebar-nav">
                 <div class="card rounded-lg p-3 mb-3">
                     <div class="flex flex-wrap items-center justify-between">
@@ -505,24 +490,23 @@
 
             <!-- Основной контент -->
             <main class="flex-1 min-w-0">
+                <!-- ===== ОБЩАЯ ПАНЕЛЬ ФИЛЬТРОВ ===== -->
+                <div class="filters-row flex gap-2 flex-wrap mb-3">
+                    <select id="filterPriority" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()">
+                        <option value="all">Все приоритеты</option>
+                        <option value="high">🔴 Высокий</option>
+                        <option value="medium">🟡 Средний</option>
+                        <option value="low">🟢 Низкий</option>
+                    </select>
+                    <select id="filterCreatedBy" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()"></select>
+                    <select id="filterAssignee" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()"></select>
+                    <input type="text" id="searchTask" placeholder="🔍 Поиск..." class="px-2 py-1.5 rounded-lg card text-sm font-semibold flex-1 min-w-[120px]" oninput="taskManager.renderTasks()">
+                </div>
+
+                <!-- Блоки представлений -->
                 <!-- Таблица -->
                 <div id="dashboardView" class="view-content">
                     <h2 class="text-xl md:text-2xl font-bold mb-3">📋 Список задач</h2>
-                    <div class="flex gap-2 flex-wrap mb-3 filters-row">
-                        <select id="filterPriority" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()">
-                            <option value="all">Все приоритеты</option>
-                            <option value="high">🔴 Высокий</option>
-                            <option value="medium">🟡 Средний</option>
-                            <option value="low">🟢 Низкий</option>
-                        </select>
-                        <select id="filterCreatedBy" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()">
-                            <!-- заполняется JS -->
-                        </select>
-                        <select id="filterAssignee" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()">
-                            <!-- заполняется JS -->
-                        </select>
-                        <input type="text" id="searchTask" placeholder="🔍 Поиск..." class="px-2 py-1.5 rounded-lg card text-sm font-semibold flex-1 min-w-[120px]" oninput="taskManager.renderTasks()">
-                    </div>
                     <div id="tasksList" class="space-y-2"></div>
                 </div>
 
@@ -563,7 +547,7 @@
         </div>
     </div>
 
-    <!-- Плавающая ссылка (адаптивная) -->
+    <!-- Плавающая ссылка -->
     <div class="share-link-float">
         <i class="fas fa-link text-xs" style="color: var(--text-light);"></i>
         <span class="link-label" style="font-size: 10px; color: var(--text-secondary);">Ссылка</span>
@@ -571,7 +555,7 @@
         <button id="copyShareLinkBtn" onclick="taskManager.copyLink()"><i class="fas fa-copy"></i></button>
     </div>
 
-    <!-- Модалка -->
+    <!-- Модалка создания/редактирования -->
     <div id="taskModal" class="modal fixed inset-0 z-50 items-center justify-center p-3">
         <div class="card rounded-xl w-full max-w-2xl fade-in" style="max-height: 90vh; overflow-y: auto;">
             <div style="background-color: var(--accent); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-radius: 10px 10px 0 0; position: sticky; top: 0; z-index: 10;">
@@ -678,7 +662,7 @@
     </div>
 
     <script>
-        // Firebase config (без изменений)
+        // Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyA8ITrOwyOajwbLL2JzLUtCcM3ajbXpExA",
             authDomain: "planner-2-56a40.firebaseapp.com",
@@ -691,7 +675,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // ====== Основной класс (без изменений, кроме мелких адаптивных доработок) ======
         class TaskManager {
             constructor() {
                 this.users = ['Лиза', 'Анжела', 'Ярик'];
@@ -781,6 +764,9 @@
                     });
                     this.renderTasks();
                     this.updateStats();
+                    if (this.viewingTaskId) {
+                        this.openDetailModal(this.viewingTaskId);
+                    }
                     document.getElementById('syncIndicator').className = 'sync-indicator online';
                     document.getElementById('syncStatus').textContent = 'Синхр.';
                 }, (error) => {
@@ -818,7 +804,10 @@
 
             openDetailModal(id) {
                 const task = this.tasks.find(t => t.id === id);
-                if (!task) return;
+                if (!task) {
+                    this.closeDetailModal();
+                    return;
+                }
                 this.viewingTaskId = id;
                 document.getElementById('detailTaskTitle').textContent = task.title;
                 document.getElementById('detailTitle').textContent = task.title;
@@ -860,7 +849,6 @@
 
             toggleTaskCompleteDetail() {
                 this.toggleTaskComplete(this.viewingTaskId);
-                setTimeout(() => this.openDetailModal(this.viewingTaskId), 200);
             }
 
             deleteTaskDetail() {
@@ -878,8 +866,18 @@
                     createdBy: document.getElementById('taskCreatedBy').value,
                     assignee: document.getElementById('taskAssignee').value,
                 };
-                if (this.editingTaskId) {
-                    database.ref('tasks/' + this.editingTaskId).update(taskData);
+                const isEditing = this.editingTaskId !== null;
+                const detailId = this.viewingTaskId;
+
+                if (isEditing) {
+                    database.ref('tasks/' + this.editingTaskId).update(taskData).then(() => {
+                        if (detailId && detailId === this.editingTaskId) {
+                            this.closeDetailModal();
+                            setTimeout(() => {
+                                this.openDetailModal(detailId);
+                            }, 300);
+                        }
+                    });
                 } else {
                     const newId = Date.now().toString();
                     database.ref('tasks/' + newId).set({
@@ -914,31 +912,14 @@
                 return dateStr;
             }
 
-            computeScore(task) {
-                const importance = { high: 3, medium: 2, low: 1 }[task.priority] || 1;
-                let urgency = 0;
-                if (task.dueDate) {
-                    const now = new Date();
-                    now.setHours(0,0,0,0);
-                    const due = new Date(task.dueDate + 'T00:00:00');
-                    const diffDays = Math.ceil((due - now) / (1000*60*60*24));
-                    if (diffDays < 0) urgency = 10;
-                    else if (diffDays === 0) urgency = 8;
-                    else if (diffDays <= 2) urgency = 6;
-                    else if (diffDays <= 5) urgency = 4;
-                    else urgency = 2;
+            // ====== УНИВЕРСАЛЬНАЯ ФИЛЬТРАЦИЯ ======
+            // includeCompleted: true – возвращает все задачи (включая завершённые), false – только активные
+            getFilteredTasks(includeCompleted = false) {
+                let filtered = this.tasks;
+                if (!includeCompleted) {
+                    filtered = filtered.filter(t => !t.completed);
                 }
-                let age = 0;
-                if (task.createdAt) {
-                    const created = new Date(task.createdAt);
-                    const now = new Date();
-                    age = Math.ceil((now - created) / (1000*60*60*24));
-                }
-                return (importance * 2) + urgency - (age / 3);
-            }
 
-            getFilteredTasks() {
-                let filtered = this.tasks.filter(t => !t.completed);
                 const priority = document.getElementById('filterPriority').value;
                 const createdBy = document.getElementById('filterCreatedBy').value;
                 const assignee = document.getElementById('filterAssignee').value;
@@ -959,10 +940,8 @@
                     filtered = filtered.filter(t => t.assignee === assignee);
                 }
 
+                // Сортировка по дате дедлайна (от ближайшей)
                 filtered.sort((a, b) => {
-                    const scoreA = this.computeScore(a);
-                    const scoreB = this.computeScore(b);
-                    if (scoreA !== scoreB) return scoreB - scoreA;
                     if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
                     if (a.dueDate) return -1;
                     if (b.dueDate) return 1;
@@ -971,6 +950,7 @@
                 return filtered;
             }
 
+            // ====== РЕНДЕРИНГ ======
             renderTasks() {
                 if (this.currentView === 'dashboard') this.renderDashboard();
                 else if (this.currentView === 'kanban') this.renderKanban();
@@ -981,18 +961,16 @@
 
             renderDashboard() {
                 const container = document.getElementById('tasksList');
-                const tasks = this.getFilteredTasks();
+                const tasks = this.getFilteredTasks(false); // только активные
                 if (tasks.length === 0) {
                     container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 8px;"></i><div>Нет задач</div></div>';
                     return;
                 }
                 container.innerHTML = tasks.map(t => {
                     const isMyTask = t.assignee === this.currentUser;
-                    const priorityIcons = { high: '🔴', medium: '🟡', low: '🟢' };
                     return `
                         <div class="task-card card rounded-lg p-3 priority-${t.priority}" onclick="taskManager.openDetailModal('${t.id}')">
                             <div style="display: flex; gap: 10px;">
-                                <div style="font-size: 26px; font-weight: bold; min-width: 32px; text-align: center;">${priorityIcons[t.priority]}</div>
                                 <div style="flex:1; min-width:0;">
                                     <h4 class="task-title" style="font-weight: bold; margin:0 0 2px 0; font-size: 15px;">${t.title}</h4>
                                     <div class="task-description-preview">${t.description || ''}</div>
@@ -1015,14 +993,15 @@
             }
 
             renderKanban() {
-                const active = this.tasks.filter(t => !t.completed);
-                const completed = this.tasks.filter(t => t.completed);
+                // Получаем все отфильтрованные задачи (включая завершённые, чтобы разделить)
+                const allFiltered = this.getFilteredTasks(true);
+                const active = allFiltered.filter(t => !t.completed);
+                const completed = allFiltered.filter(t => t.completed);
+
                 const createCard = (t) => {
-                    const priorityIcons = { high: '🔴', medium: '🟡', low: '🟢' };
                     return `
                         <div class="task-card card rounded-lg p-2 priority-${t.priority}" onclick="taskManager.openDetailModal('${t.id}')">
                             <div style="display: flex; gap: 4px; align-items: flex-start;">
-                                <div style="font-size: 18px;">${priorityIcons[t.priority]}</div>
                                 <div style="flex:1; min-width:0;">
                                     <h4 style="font-weight: 600; margin:0; font-size: 13px;">${t.title}</h4>
                                     <div class="task-description-preview" style="font-size: 11px;">${t.description || ''}</div>
@@ -1047,17 +1026,15 @@
 
             renderArchive() {
                 const container = document.getElementById('archiveList');
-                const archived = this.tasks.filter(t => t.completed);
+                const archived = this.getFilteredTasks(true).filter(t => t.completed);
                 if (archived.length === 0) {
                     container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 8px;"></i><div>Архив пуст</div></div>';
                     return;
                 }
                 container.innerHTML = archived.map(t => {
-                    const priorityIcons = { high: '🔴', medium: '🟡', low: '🟢' };
                     return `
                         <div class="task-card card rounded-lg p-3 priority-${t.priority}" onclick="taskManager.openDetailModal('${t.id}')">
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <div style="font-size: 22px;">${priorityIcons[t.priority]}</div>
                                 <div style="flex:1; min-width:0;">
                                     <h4 style="margin:0; text-decoration: line-through; opacity:0.7; font-size: 14px;">${t.title}</h4>
                                     <div class="task-description-preview" style="font-size: 11px;">${t.description || ''}</div>
@@ -1087,9 +1064,12 @@
                 let startOffset = firstDay === 0 ? 6 : firstDay - 1;
                 for (let i = 0; i < startOffset; i++) html += '<div></div>';
 
+                // Получаем только активные задачи с фильтрацией
+                const filteredActive = this.getFilteredTasks(false);
+
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const tasksForDay = this.tasks.filter(t => !t.completed && t.dueDate === dateStr);
+                    const tasksForDay = filteredActive.filter(t => t.dueDate === dateStr);
                     const priorityIcons = { high: '🔴', medium: '🟡', low: '🟢' };
                     html += `<div class="calendar-day">
                         <div style="font-weight: bold; font-size: 12px; text-align: left;">${day}</div>
