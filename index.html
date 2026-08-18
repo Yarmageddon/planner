@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        /* все стили без изменений (адаптивная версия) */
+        /* --- базовые стили (без изменений) --- */
         * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         :root {
             --bg-primary: #ffffff;
@@ -145,24 +145,33 @@
         .sync-indicator.online { background-color: var(--success); }
         .sync-indicator.offline { background-color: var(--danger); }
 
+        /* ===== УВЕЛИЧЕННЫЙ КАЛЕНДАРЬ ===== */
         .calendar-day {
-            padding: 4px;
+            padding: 8px 6px;
             text-align: center;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 8px;
             transition: all 0.15s ease;
-            min-height: 60px;
+            min-height: 90px; /* было 60px */
             border: 1px solid var(--border-color);
             position: relative;
             background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
         }
         .calendar-day:hover { background-color: var(--bg-tertiary); transform: scale(1.02); z-index: 2; }
+        .calendar-day .day-number {
+            font-weight: bold;
+            font-size: 16px; /* было 12px */
+            text-align: left;
+            margin-bottom: 4px;
+        }
         .calendar-day .task-preview {
-            font-size: 10px;
+            font-size: 12px; /* было 10px */
             text-align: left;
             margin-top: 2px;
-            line-height: 1.2;
-            max-height: 36px;
+            line-height: 1.3;
+            max-height: 60px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -170,7 +179,10 @@
         .calendar-day .task-preview .assignee {
             font-weight: 500;
             color: var(--accent);
-            font-size: 9px;
+            font-size: 10px; /* было 9px */
+        }
+        .calendar-day .task-preview .priority-icon {
+            font-size: 14px;
         }
 
         .avatar {
@@ -261,7 +273,40 @@
             overflow: hidden;
         }
 
-        /* Адаптивность */
+        /* Адаптивность для календаря на мобилках */
+        @media (max-width: 767px) {
+            .calendar-day {
+                min-height: 60px;
+                padding: 4px 2px;
+            }
+            .calendar-day .day-number {
+                font-size: 12px;
+            }
+            .calendar-day .task-preview {
+                font-size: 9px;
+                max-height: 30px;
+            }
+            .calendar-day .task-preview .assignee {
+                font-size: 8px;
+            }
+        }
+        @media (max-width: 480px) {
+            .calendar-day {
+                min-height: 50px;
+            }
+            .calendar-day .day-number {
+                font-size: 10px;
+            }
+            .calendar-day .task-preview {
+                font-size: 8px;
+                max-height: 24px;
+            }
+            .calendar-day .task-preview .assignee {
+                font-size: 7px;
+            }
+        }
+
+        /* Остальная адаптивность (без изменений) */
         @media (max-width: 767px) {
             .main-layout {
                 flex-direction: column !important;
@@ -355,19 +400,6 @@
                 grid-template-columns: 1fr !important;
                 gap: 12px;
             }
-            .calendar-day {
-                min-height: 50px;
-                padding: 2px;
-                font-size: 11px;
-            }
-            .calendar-day .task-preview {
-                font-size: 9px;
-                white-space: normal;
-                max-height: 30px;
-            }
-            .calendar-day .task-preview .assignee {
-                font-size: 8px;
-            }
             .modal-content {
                 padding: 16px;
             }
@@ -392,17 +424,6 @@
             .share-link-float button {
                 font-size: 10px;
                 padding: 2px 4px;
-            }
-            .calendar-day {
-                min-height: 40px;
-                font-size: 10px;
-            }
-            .calendar-day .task-preview {
-                font-size: 8px;
-                max-height: 24px;
-            }
-            .calendar-day .task-preview .assignee {
-                font-size: 7px;
             }
             .task-card {
                 padding: 8px !important;
@@ -490,7 +511,7 @@
 
             <!-- Основной контент -->
             <main class="flex-1 min-w-0">
-                <!-- ===== ОБЩАЯ ПАНЕЛЬ ФИЛЬТРОВ ===== -->
+                <!-- Общая панель фильтров -->
                 <div class="filters-row flex gap-2 flex-wrap mb-3">
                     <select id="filterPriority" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()">
                         <option value="all">Все приоритеты</option>
@@ -503,7 +524,6 @@
                     <input type="text" id="searchTask" placeholder="🔍 Поиск..." class="px-2 py-1.5 rounded-lg card text-sm font-semibold flex-1 min-w-[120px]" oninput="taskManager.renderTasks()">
                 </div>
 
-                <!-- Блоки представлений -->
                 <!-- Таблица -->
                 <div id="dashboardView" class="view-content">
                     <h2 class="text-xl md:text-2xl font-bold mb-3">📋 Список задач</h2>
@@ -525,20 +545,20 @@
                     </div>
                 </div>
 
-                <!-- Календарь -->
+                <!-- Календарь (увеличен) -->
                 <div id="calendarView" class="view-content hidden">
                     <h2 class="text-xl md:text-2xl font-bold mb-3">📅 Календарь</h2>
-                    <div class="card rounded-lg p-3">
-                        <div class="flex justify-between items-center mb-3">
-                            <button class="btn-secondary px-2 py-1 rounded-lg text-sm" onclick="taskManager.prevMonth()">←</button>
-                            <h3 id="monthYear" class="font-bold text-base md:text-lg"></h3>
-                            <button class="btn-secondary px-2 py-1 rounded-lg text-sm" onclick="taskManager.nextMonth()">→</button>
+                    <div class="card rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <button class="btn-secondary px-3 py-1.5 rounded-lg text-sm" onclick="taskManager.prevMonth()">← Назад</button>
+                            <h3 id="monthYear" class="font-bold text-lg"></h3>
+                            <button class="btn-secondary px-3 py-1.5 rounded-lg text-sm" onclick="taskManager.nextMonth()">Вперед →</button>
                         </div>
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
                     </div>
                 </div>
 
-                <!-- Архив -->
+                <!-- Архив (простой список) -->
                 <div id="archiveView" class="view-content hidden">
                     <h2 class="text-xl md:text-2xl font-bold mb-3">📦 Архив</h2>
                     <div id="archiveList" class="space-y-2"></div>
@@ -912,8 +932,7 @@
                 return dateStr;
             }
 
-            // ====== УНИВЕРСАЛЬНАЯ ФИЛЬТРАЦИЯ ======
-            // includeCompleted: true – возвращает все задачи (включая завершённые), false – только активные
+            // Универсальная фильтрация
             getFilteredTasks(includeCompleted = false) {
                 let filtered = this.tasks;
                 if (!includeCompleted) {
@@ -940,7 +959,6 @@
                     filtered = filtered.filter(t => t.assignee === assignee);
                 }
 
-                // Сортировка по дате дедлайна (от ближайшей)
                 filtered.sort((a, b) => {
                     if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
                     if (a.dueDate) return -1;
@@ -950,7 +968,6 @@
                 return filtered;
             }
 
-            // ====== РЕНДЕРИНГ ======
             renderTasks() {
                 if (this.currentView === 'dashboard') this.renderDashboard();
                 else if (this.currentView === 'kanban') this.renderKanban();
@@ -961,7 +978,7 @@
 
             renderDashboard() {
                 const container = document.getElementById('tasksList');
-                const tasks = this.getFilteredTasks(false); // только активные
+                const tasks = this.getFilteredTasks(false);
                 if (tasks.length === 0) {
                     container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 8px;"></i><div>Нет задач</div></div>';
                     return;
@@ -993,7 +1010,6 @@
             }
 
             renderKanban() {
-                // Получаем все отфильтрованные задачи (включая завершённые, чтобы разделить)
                 const allFiltered = this.getFilteredTasks(true);
                 const active = allFiltered.filter(t => !t.completed);
                 const completed = allFiltered.filter(t => t.completed);
@@ -1024,6 +1040,7 @@
                 document.getElementById('completedKanbanCount').textContent = completed.length;
             }
 
+            // Архив – простой список (без группировок)
             renderArchive() {
                 const container = document.getElementById('archiveList');
                 const archived = this.getFilteredTasks(true).filter(t => t.completed);
@@ -1059,12 +1076,11 @@
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 let html = '';
                 const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-                dayNames.forEach(d => { html += `<div style="font-weight: bold; text-align: center; padding: 4px; font-size: 12px;">${d}</div>`; });
+                dayNames.forEach(d => { html += `<div style="font-weight: bold; text-align: center; padding: 6px; font-size: 14px;">${d}</div>`; });
 
                 let startOffset = firstDay === 0 ? 6 : firstDay - 1;
                 for (let i = 0; i < startOffset; i++) html += '<div></div>';
 
-                // Получаем только активные задачи с фильтрацией
                 const filteredActive = this.getFilteredTasks(false);
 
                 for (let day = 1; day <= daysInMonth; day++) {
@@ -1072,16 +1088,17 @@
                     const tasksForDay = filteredActive.filter(t => t.dueDate === dateStr);
                     const priorityIcons = { high: '🔴', medium: '🟡', low: '🟢' };
                     html += `<div class="calendar-day">
-                        <div style="font-weight: bold; font-size: 12px; text-align: left;">${day}</div>
+                        <div class="day-number">${day}</div>
                         ${tasksForDay.length > 0 ? `
-                            <div style="display: flex; flex-direction: column; gap: 1px; margin-top: 2px;">
-                                ${tasksForDay.slice(0, 3).map(t => `
+                            <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 4px;">
+                                ${tasksForDay.slice(0, 4).map(t => `
                                     <div class="task-preview" title="${t.description || ''}" onclick="event.stopPropagation(); taskManager.openDetailModal('${t.id}')">
-                                        <span>${priorityIcons[t.priority]} ${t.title}</span>
+                                        <span class="priority-icon">${priorityIcons[t.priority]}</span>
+                                        <span>${t.title}</span>
                                         <span class="assignee">${t.assignee || ''}</span>
                                     </div>
                                 `).join('')}
-                                ${tasksForDay.length > 3 ? `<div style="font-size: 9px; opacity:0.7; text-align:left;">+${tasksForDay.length - 3}</div>` : ''}
+                                ${tasksForDay.length > 4 ? `<div style="font-size: 11px; opacity:0.7; text-align:left;">+${tasksForDay.length - 4}</div>` : ''}
                             </div>
                         ` : ''}
                     </div>`;
