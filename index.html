@@ -26,6 +26,7 @@
             --danger: #b03a2e;
             --success: #2d7d4a;
             --warning: #b8860b;
+            --modal-bg: rgba(0,0,0,0.4);
         }
         html.dark {
             --bg-primary: #1e2a3a;
@@ -40,6 +41,7 @@
             --danger: #d35c4a;
             --success: #4a9e6a;
             --warning: #d4a017;
+            --modal-bg: rgba(0,0,0,0.6);
         }
         html, body { margin: 0; padding: 0; min-height: 100vh; }
         body {
@@ -119,10 +121,104 @@
         .task-card.priority-high { border-left-color: var(--danger); }
 
         /* ----- МОДАЛЬНЫЕ ОКНА ----- */
-        .modal { display: none; background-color: rgba(0,0,0,0.3); backdrop-filter: blur(3px); }
+        .modal {
+            display: none;
+            background-color: var(--modal-bg);
+            backdrop-filter: blur(4px);
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
         .modal.active { display: flex; }
-        .fade-in { animation: fadeIn 0.25s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            animation: fadeIn 0.25s ease;
+        }
+        .modal-header {
+            background: var(--accent);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .modal-header button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .modal-body {
+            padding: 24px 20px;
+        }
+        .modal-body .field-group {
+            margin-bottom: 20px;
+        }
+        .modal-body .field-group:last-child {
+            margin-bottom: 0;
+        }
+        .modal-body label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .modal-body input,
+        .modal-body textarea,
+        .modal-body select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .modal-body input:focus,
+        .modal-body textarea:focus,
+        .modal-body select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(74,106,143,0.15);
+        }
+        .modal-body .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .modal-body .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .modal-body .form-actions button {
+            flex: 1;
+        }
 
         /* ----- КАЛЕНДАРЬ ----- */
         .calendar-day {
@@ -330,8 +426,7 @@
             .calendar-day .task-preview { font-size: 10px; white-space: normal; }
             .share-link-float { max-width: 160px; padding: 4px 8px; }
             .share-link-float input { width: 70px; font-size: 10px; }
-            .modal-content { padding: 16px; }
-            .modal-content .form-row { grid-template-columns: 1fr !important; }
+            .modal-body .form-row { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 480px) {
             .calendar-day {
@@ -420,7 +515,7 @@
 
             <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
             <main class="flex-1 min-w-0">
-                <!-- Единая панель фильтров (работает для всех вкладок) -->
+                <!-- Единая панель фильтров -->
                 <div class="filters-row flex gap-2 flex-wrap mb-3">
                     <select id="filterPriority" class="px-2 py-1.5 rounded-lg card text-sm font-semibold" onchange="taskManager.renderTasks()">
                         <option value="all">Все приоритеты</option>
@@ -491,107 +586,111 @@
     </div>
 
     <!-- ===== МОДАЛКА СОЗДАНИЯ/РЕДАКТИРОВАНИЯ ===== -->
-    <div id="taskModal" class="modal fixed inset-0 z-50 items-center justify-center p-3">
-        <div class="card rounded-xl w-full max-w-2xl fade-in" style="max-height:90vh; overflow-y:auto;">
-            <div style="background-color:var(--accent); color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-radius:10px 10px 0 0; position:sticky; top:0; z-index:10;">
-                <h3 id="modalTitle" style="font-size:18px; font-weight:bold; margin:0;">Новая задача</h3>
-                <button style="font-size:20px; cursor:pointer; background:none; border:none; color:white; padding:0;" onclick="taskManager.closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Новая задача</h3>
+                <button onclick="taskManager.closeModal()"><i class="fas fa-times"></i></button>
             </div>
-            <form id="taskForm" style="padding:16px; display:flex; flex-direction:column; gap:12px;" onsubmit="taskManager.handleFormSubmit(event)">
-                <div>
-                    <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Название *</label>
-                    <input type="text" id="taskTitle" required style="width:100%;">
+            <form id="taskForm" class="modal-body" onsubmit="taskManager.handleFormSubmit(event)">
+                <div class="field-group">
+                    <label for="taskTitle">Название задачи *</label>
+                    <input type="text" id="taskTitle" required>
                 </div>
-                <div>
-                    <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Описание</label>
-                    <textarea id="taskDescription" rows="2" style="width:100%; resize:none;" placeholder="Детали..."></textarea>
+
+                <div class="field-group">
+                    <label for="taskDescription">Описание</label>
+                    <textarea id="taskDescription" rows="2" placeholder="Детали задачи..."></textarea>
                 </div>
-                <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div>
-                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Поставил *</label>
-                        <select id="taskCreatedBy" required style="width:100%;"></select>
+
+                <div class="form-row">
+                    <div class="field-group">
+                        <label for="taskCreatedBy">Поставил *</label>
+                        <select id="taskCreatedBy" required></select>
                     </div>
-                    <div>
-                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Назначена *</label>
-                        <select id="taskAssignee" required style="width:100%;">
+                    <div class="field-group">
+                        <label for="taskAssignee">Назначена *</label>
+                        <select id="taskAssignee" required>
                             <option value="">Выберите исполнителя</option>
                         </select>
                     </div>
                 </div>
-                <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div>
-                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Срок</label>
-                        <input type="date" id="taskDueDate" style="width:100%;">
+
+                <div class="form-row">
+                    <div class="field-group">
+                        <label for="taskDueDate">Срок</label>
+                        <input type="date" id="taskDueDate">
                     </div>
-                    <div>
-                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Приоритет *</label>
-                        <select id="taskPriority" required style="width:100%;">
+                    <div class="field-group">
+                        <label for="taskPriority">Приоритет *</label>
+                        <select id="taskPriority" required>
                             <option value="low">🟢 Низкий</option>
                             <option value="medium" selected>🟡 Средний</option>
                             <option value="high">🔴 Высокий</option>
                         </select>
                     </div>
                 </div>
-                <div style="display:flex; gap:8px; margin-top:4px;">
-                    <button type="submit" class="btn-primary" style="flex:1; padding:10px; border-radius:6px; font-weight:600; font-size:14px;">Сохранить</button>
-                    <button type="button" class="btn-secondary" style="padding:10px 16px; border-radius:6px;" onclick="taskManager.closeModal()">Отмена</button>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Сохранить</button>
+                    <button type="button" class="btn-secondary" onclick="taskManager.closeModal()">Отмена</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- ===== МОДАЛКА ДЕТАЛЕЙ ЗАДАЧИ ===== -->
-    <div id="taskDetailModal" class="modal fixed inset-0 z-50 items-center justify-center p-3">
-        <div class="card rounded-xl w-full max-w-3xl fade-in" style="max-height:90vh; overflow-y:auto;">
-            <div style="background-color:var(--accent); color:white; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-radius:10px 10px 0 0; position:sticky; top:0; z-index:10;">
-                <h3 id="detailTaskTitle" style="font-size:18px; font-weight:bold; margin:0;">Детали задачи</h3>
-                <button style="font-size:20px; cursor:pointer; background:none; border:none; color:white; padding:0;" onclick="taskManager.closeDetailModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+    <div id="taskDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="detailTaskTitle">Детали задачи</h3>
+                <button onclick="taskManager.closeDetailModal()"><i class="fas fa-times"></i></button>
             </div>
-            <div style="padding:16px;">
-                <div style="margin-bottom:12px; display:flex; gap:10px; align-items:center;">
+            <div class="modal-body">
+                <div style="margin-bottom: 16px; display:flex; gap:12px; align-items:center;">
                     <div style="font-size:32px; font-weight:bold;" id="detailPriorityIcon"></div>
-                    <div style="flex:1;">
-                        <h2 id="detailTitle" style="font-size:20px; font-weight:bold; margin:0;"></h2>
+                    <div>
+                        <h2 id="detailTitle" style="font-size:22px; font-weight:700; margin:0 0 4px 0;"></h2>
                         <span id="detailPriorityText" class="badge"></span>
                     </div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-                    <div>
-                        <h4 style="font-size:11px; font-weight:600; color:var(--text-secondary); margin:0 0 4px 0; text-transform:uppercase;">Поставил</h4>
+
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div class="field-group">
+                        <label>Поставил</label>
                         <div class="user-badge"><i class="fas fa-user-tie"></i> <span id="detailCreatedBy">-</span></div>
                     </div>
-                    <div>
-                        <h4 style="font-size:11px; font-weight:600; color:var(--text-secondary); margin:0 0 4px 0; text-transform:uppercase;">Назначена</h4>
+                    <div class="field-group">
+                        <label>Назначена</label>
                         <div class="user-badge"><i class="fas fa-user-check"></i> <span id="detailAssignee">-</span></div>
                     </div>
                 </div>
-                <div style="margin-bottom:16px;">
-                    <h4 style="font-size:11px; font-weight:600; color:var(--text-secondary); margin:0 0 4px 0; text-transform:uppercase;">Описание</h4>
-                    <div id="detailDescription" style="line-height:1.5; color:var(--text-secondary); padding:8px; background-color:var(--bg-tertiary); border-radius:6px; min-height:50px; font-size:14px;">-</div>
+
+                <div class="field-group" style="margin-bottom:16px;">
+                    <label>Описание</label>
+                    <div id="detailDescription" style="line-height:1.5; color:var(--text-secondary); padding:8px; background:var(--bg-tertiary); border-radius:6px; min-height:50px;">-</div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-                    <div>
-                        <h4 style="font-size:11px; font-weight:600; color:var(--text-secondary); margin:0 0 4px 0; text-transform:uppercase;">Срок</h4>
+
+                <div class="form-row" style="margin-bottom:20px;">
+                    <div class="field-group">
+                        <label>Срок</label>
                         <div style="font-size:14px;"><i class="fas fa-calendar"></i> <span id="detailDueDate">-</span></div>
                     </div>
-                    <div>
-                        <h4 style="font-size:11px; font-weight:600; color:var(--text-secondary); margin:0 0 4px 0; text-transform:uppercase;">Создана</h4>
+                    <div class="field-group">
+                        <label>Создана</label>
                         <div style="font-size:13px; color:var(--text-secondary);" id="detailCreatedAt">-</div>
                     </div>
                 </div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button id="editTaskBtn" class="btn-primary" style="padding:6px 14px; border-radius:6px; font-weight:600; font-size:13px;" onclick="taskManager.switchToEditFromDetail()">
-                        <i class="fas fa-edit"></i> Ред.
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--border-color); padding-top:16px;">
+                    <button id="editTaskBtn" class="btn-primary" onclick="taskManager.switchToEditFromDetail()">
+                        <i class="fas fa-edit"></i> Редактировать
                     </button>
-                    <button id="completeTaskBtn" style="padding:6px 14px; border-radius:6px; font-weight:600; font-size:13px; border:none; cursor:pointer;" onclick="taskManager.toggleTaskCompleteDetail()">
+                    <button id="completeTaskBtn" style="padding:8px 16px; border-radius:6px; font-weight:600; font-size:13px; border:none; cursor:pointer;" onclick="taskManager.toggleTaskCompleteDetail()">
                         <span id="completeButtonText"><i class="fas fa-check"></i> Завершить</span>
                     </button>
-                    <button id="deleteTaskBtn" class="btn-secondary" style="padding:6px 14px; border-radius:6px; font-weight:600; font-size:13px; color:var(--danger);" onclick="taskManager.deleteTaskDetail()">
-                        <i class="fas fa-trash"></i> Уд.
+                    <button id="deleteTaskBtn" class="btn-secondary" style="color:var(--danger);" onclick="taskManager.deleteTaskDetail()">
+                        <i class="fas fa-trash"></i> Удалить
                     </button>
                 </div>
             </div>
@@ -615,7 +714,6 @@
         // ===== ОСНОВНОЙ КЛАСС =====
         class TaskManager {
             constructor() {
-                // Справочник пользователей
                 this.users = ['Лиза', 'Анжела', 'Ярик'];
                 this.currentUser = localStorage.getItem('plannerUser') || 'Ярик';
                 if (!this.users.includes(this.currentUser)) this.currentUser = 'Ярик';
@@ -634,6 +732,7 @@
                 this.loadTheme();
                 this.loadFromFirebase();
                 document.getElementById('shareLink').value = window.location.href;
+
                 // Смена пользователя
                 document.getElementById('currentUserSelect').addEventListener('change', (e) => {
                     this.currentUser = e.target.value;
@@ -641,7 +740,6 @@
                     this.renderTasks();
                     this.updateStats();
                 });
-                // Фильтры (уже вызывают renderTasks)
             }
 
             // ----- ЗАПОЛНЕНИЕ SELECT'ов -----
@@ -662,25 +760,23 @@
                         optMe.textContent = id === 'filterCreatedBy' ? 'Я — Поставил' : 'Мне — Назначена';
                         sel.appendChild(optMe);
                     } else if (id === 'taskAssignee') {
-                        // Добавляем пустой option для исполнителя
                         const optEmpty = document.createElement('option');
                         optEmpty.value = '';
                         optEmpty.textContent = 'Выберите исполнителя';
                         sel.appendChild(optEmpty);
                     }
-                    // Добавляем пользователей
                     this.users.forEach(u => {
                         const opt = document.createElement('option');
                         opt.value = u;
                         opt.textContent = u;
                         sel.appendChild(opt);
                     });
-                    // Восстанавливаем значение
                     if (currentVal && [...sel.options].some(o => o.value === currentVal)) {
                         sel.value = currentVal;
-                    } else if (id === 'taskCreatedBy' || id === 'taskAssignee') {
-                        if (id === 'taskCreatedBy') sel.value = this.currentUser;
-                        else if (id === 'taskAssignee') sel.value = ''; // пустой
+                    } else if (id === 'taskCreatedBy') {
+                        sel.value = this.currentUser;
+                    } else if (id === 'taskAssignee') {
+                        sel.value = '';
                     }
                 });
             }
@@ -708,13 +804,17 @@
             loadFromFirebase() {
                 database.ref('tasks').on('value', (snapshot) => {
                     this.tasks = [];
-                    snapshot.forEach(child => this.tasks.push(child.val()));
+                    snapshot.forEach(child => {
+                        const task = child.val();
+                        if (task) this.tasks.push(task);
+                    });
                     this.renderTasks();
                     this.updateStats();
                     if (this.viewingTaskId) this.openDetailModal(this.viewingTaskId);
                     document.getElementById('syncIndicator').className = 'sync-indicator online';
                     document.getElementById('syncStatus').textContent = 'Синхр.';
                 }, (err) => {
+                    console.error('Firebase error:', err);
                     document.getElementById('syncIndicator').className = 'sync-indicator offline';
                     document.getElementById('syncStatus').textContent = 'Ошибка';
                 });
@@ -729,7 +829,9 @@
                 this.editingTaskId = null;
                 document.getElementById('taskModal').classList.add('active');
             }
-            closeModal() { document.getElementById('taskModal').classList.remove('active'); }
+            closeModal() {
+                document.getElementById('taskModal').classList.remove('active');
+            }
 
             openEditModal(id) {
                 const task = this.tasks.find(t => t.id === id);
@@ -833,7 +935,7 @@
                 if (confirm('Удалить задачу?')) database.ref('tasks/' + id).remove();
             }
 
-            // ----- ФОРМАТИРОВАНИЕ ДАТЫ (ручной парсинг) -----
+            // ----- ФОРМАТИРОВАНИЕ ДАТЫ -----
             formatDate(dateStr) {
                 if (!dateStr) return '';
                 const parts = dateStr.split('T')[0].split('-');
@@ -950,10 +1052,8 @@
             // ----- АРХИВ -----
             renderArchive() {
                 const container = document.getElementById('archiveList');
-                // Применяем фильтры, но только к завершённым задачам
                 const allFiltered = this.getFilteredTasks(true);
                 const archived = allFiltered.filter(t => t.completed);
-                // Сортировка по дате
                 archived.sort((a, b) => {
                     if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
                     if (a.dueDate) return -1;
@@ -996,7 +1096,6 @@
                 let offset = firstDay === 0 ? 6 : firstDay - 1;
                 for (let i = 0; i < offset; i++) html += '<div></div>';
 
-                // Получаем активные задачи с фильтрацией
                 const filteredActive = this.getFilteredTasks(false);
 
                 for (let day = 1; day <= daysInMonth; day++) {
